@@ -60,6 +60,16 @@ func New(version string) func() *schema.Provider {
 								Type:        schema.TypeString,
 								Optional:    true,
 							},
+							"kubeconfig_path": {
+								Description: "Path to a Kubeconfig file, if the Elasticsearch cluster is managed by ECK",
+								Type:        schema.TypeString,
+								Optional:    true,
+							},
+							"namespace_name": {
+								Description: "Namespace/name of the Elasticsearch resource managed by ECK",
+								Type:        schema.TypeString,
+								Optional:    true,
+							},
 						},
 					},
 				},

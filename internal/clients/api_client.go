@@ -101,6 +101,45 @@ func NewApiClientFunc(version string, p *schema.Provider) func(context.Context, 
 					}
 					config.CACert = caCert
 				}
+
+				if kubeconfigPath, ok := esConfig["kubeconfig_path"]; ok {
+					if nsn, ok := esConfig["namespace_name"]; ok {
+						nsnElements := strings.Split(nsn.(string), "/")
+						if len(nsnElements) != 2 {
+							diags = append(diags, diag.Diagnostic{
+								Severity: diag.Error,
+								Summary:  "Unable to create Elasticsearch client",
+								Detail:   fmt.Sprintf("invalid namespace/name: %s", nsn),
+							})
+						}
+						namespace := nsnElements[0]
+						name := nsnElements[1]
+						var err error
+						k8sClient, err := utils.NewK8sClient(kubeconfigPath.(string))
+						if err != nil {
+							diags = append(diags, diag.Diagnostic{
+								Severity: diag.Error,
+								Summary:  "Unable to create Elasticsearch client",
+								Detail:   err.Error(),
+							})
+						}
+
+						config, err = utils.ResolveEsConfigFromk8s(k8sClient, namespace, name)
+						if err != nil {
+							diags = append(diags, diag.Diagnostic{
+								Severity: diag.Error,
+								Summary:  "Unable to create Elasticsearch client",
+								Detail:   err.Error(),
+							})
+						}
+					} else {
+						diags = append(diags, diag.Diagnostic{
+							Severity: diag.Error,
+							Summary:  "namespace_name must be defined if kubeconfig_path is set",
+							Detail:   fmt.Sprintf("invalid namespace/name: %s", nsn),
+						})
+					}
+				}
 			}
 		}
 
